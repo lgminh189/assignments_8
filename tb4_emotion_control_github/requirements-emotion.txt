@@ -1,0 +1,7 @@
+# Python 3.12 / Ubuntu 24.04 ROS 2 Jazzy
+# Do not install a headless OpenCV wheel: the camera node uses cv2.imshow.
+deepface==0.0.93
+tensorflow==2.21.0
+tf-keras==2.21.0
+numpy==1.26.4
+opencv-python==4.11.0.86
