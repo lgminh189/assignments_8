@@ -12,7 +12,7 @@ from pathlib import Path
 
 
 def generate_launch_description():
-    scripts = Path(get_package_prefix('tb4_emotion_control')) / 'lib' / 'tb4_assignment'
+    scripts = Path(get_package_prefix('tb4_emotion_control')) / 'lib' / 'tb4_emotion_control'
     camera = ExecuteProcess(
         cmd=[LaunchConfiguration('python_executable'), str(scripts / 'emotion_recognition_node.py'),
              '--ros-args', '-p', ['camera_index:=', LaunchConfiguration('camera_index')],
@@ -25,7 +25,7 @@ def generate_launch_description():
              '-p', ['smoothing_window:=', LaunchConfiguration('smoothing_window')],
              '-p', ['detector_backend:=', LaunchConfiguration('detector_backend')]], output='screen')
     behavior = Node(
-        package='tb4_assignment', executable='emotion_behavior_node.py', output='screen',
+        package='tb4_emotion_control', executable='emotion_behavior_node.py', output='screen',
         parameters=[{'use_sim_time': ParameterValue(LaunchConfiguration('use_sim_time'), value_type=bool),
                      'signal_timeout': ParameterValue(LaunchConfiguration('signal_timeout'), value_type=float),
                      'linear_scale': ParameterValue(LaunchConfiguration('linear_scale'), value_type=float),

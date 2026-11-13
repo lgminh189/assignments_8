@@ -8,7 +8,7 @@
 **Ngày:** 13/11/2026  
 **Nền tảng phát triển:** Ubuntu 24.04, ROS 2 Jazzy, Python 3.12  
 
-> **Tính trung thực của kết quả:** Báo cáo mô tả đúng source hiện có và các bước đã chạy. Package đã build thành công. Log các phiên trước cho thấy webcam mở được và từng gửi nhãn `Angry` tới node điều khiển, nhưng chưa có bằng chứng chạy đầu-cuối sau các cập nhật gần nhất và chưa có ảnh chụp Gazebo cho từng hành vi. Hình trong báo cáo là sơ đồ/quỹ đạo lý thuyết, không được trình bày như ảnh chụp thí nghiệm.
+> **Tính trung thực của kết quả:** Báo cáo phân biệt ảnh minh họa với dữ liệu thật. Trong phiên hiện tại, Gazebo, webcam và hai node ROS đang chạy; đã lưu một khung hình từ camera mô phỏng, ảnh preview nhận diện đã làm mờ khuôn mặt, cùng log cho thấy cả sáu nhãn tới node điều khiển. Log này không có nhãn ground-truth nên không dùng để tính độ chính xác. Quỹ đạo ở Hình 2 vẫn là mô hình lý thuyết; chưa đo quỹ đạo/odometry riêng cho từng hành vi.
 
 ## Tóm tắt
 
@@ -162,21 +162,26 @@ ros2 topic echo /cmd_vel
 | Source nhận diện, điều khiển và launch | Có trong package | Đã đối chiếu các tệp source. |
 | Build ROS package | Thành công | `colcon build --symlink-install --packages-select tb4_assignment` kết thúc với `1 package finished`. |
 | Build bản package GitHub độc lập | Thành công | `colcon build --base-paths src --symlink-install --packages-select tb4_emotion_control` kết thúc thành công. |
-| Webcam được hệ điều hành liệt kê | Có `/dev/video0`, `/dev/video1` tại lần kiểm tra | Chưa tự nó chứng minh OpenCV mở được thiết bị trong lần chạy mới. |
-| Webcam và DeepFace ở phiên trước | Log cũ báo camera mở và một kết quả `Angry` tới behavior node | Log đó có trước cập nhật cuối; không dùng làm bằng chứng cho độ chính xác hiện tại. |
-| Sáu biểu cảm được phân loại ổn định | Chưa nghiệm thu | Chưa có bộ ảnh kiểm thử gán nhãn hoặc log điểm riêng cho từng biểu cảm. |
-| Sáu hành vi robot trên Gazebo/robot thật | Chưa nghiệm thu | Chưa có video/ảnh hoặc odometry đo sau cập nhật. |
+| Webcam OpenCV | Đã mở trong phiên hiện tại | Tiến trình emotion giữ `/dev/video0`; log báo webcam sẵn sàng. |
+| Camera mô phỏng TurtleBot | Đã nhận ảnh | Lưu được frame 320×240 từ `/oakd/rgb/preview/image_raw`, frame id `oakd_rgb_camera_optical_frame`. |
+| Sáu nhãn cảm xúc trong phiên | Đều đã xuất hiện trong log | Số lần trạng thái đổi / confidence cao nhất ghi được: Happy 6 / 82%, Sad 10 / 83%, Neutral 38 / 99%, Angry 2 / 56%, Surprise 1 / 42%, Fear 5 / 76%. Đây là số lần log đổi nhãn, không phải số frame kiểm thử. |
+| Subscriber và lệnh vận tốc | Đã quan sát | `/cmd_vel` có motion-controller subscriber; một mẫu ở thời điểm kiểm tra có vận tốc 0 vì robot đang dừng. Node hành vi đã nhận log cho cả sáu trạng thái. |
+| Độ chính xác phân loại | Chưa định lượng | Không có nhãn ground-truth theo từng khung hình; các confidence không phải accuracy. |
+| Quỹ đạo robot theo từng trạng thái | Chưa đo định lượng | Chưa ghi odometry trước/sau mỗi hành vi để xác nhận góc quay và quãng đường thực tế. |
 
-### 6.1 Ảnh bằng chứng thực nghiệm cần chụp khi chạy
+### 6.1 Ảnh và log từ phiên chạy thực tế
 
-Workspace hiện không có ảnh chụp màn hình webcam hoặc Gazebo của bài nhận diện cảm xúc. Không dùng ảnh từ bài điều khiển cử chỉ để thay thế. Để hoàn thiện nghiệm thu, chụp và bổ sung các ảnh sau:
+![Khung hình camera của TurtleBot trong mô phỏng](figures/camera_simulation_actual.png)
 
-1. Webcam với khuôn mặt trước camera, nhãn và các điểm lớp trên overlay.
-2. Terminal có các nhãn `/detected_emotion` khi lần lượt thử sáu biểu cảm.
-3. Gazebo/robot khi thực hiện Happy, Sad, Angry, Surprise và Fear; ảnh Neutral thể hiện robot đứng yên.
-4. Terminal `ros2 topic info /cmd_vel -v` chứng minh subscriber motion controller.
+*Hình 3. Ảnh thật 320×240 lấy trực tiếp từ topic camera Oak-D trong phiên Gazebo đang chạy; đây là góc nhìn camera robot trong warehouse, không phải ảnh dựng.*
 
-Các hình ở Hình 1–2 chỉ là sơ đồ và kết quả mô phỏng toán học, không thay thế các ảnh thực nghiệm trên.
+![Preview webcam thật, khu vực camera đã làm mờ](figures/webcam_emotion_actual_blurred.png)
+
+*Hình 4. Ảnh thật của cửa sổ preview trong cùng phiên; khu vực hình ảnh đã làm mờ để bảo vệ riêng tư. Khi chụp, overlay hiển thị `Sad 71%`; ảnh đơn lẻ không xác nhận rằng nhãn đó đúng với cảm xúc thật.*
+
+Log của node nhận diện và node hành vi trong phiên này ghi nhận sáu nhãn Happy, Sad, Neutral, Angry, Surprise và Fear. Ví dụ score cao nhất được log là Happy 82%, Sad 83%, Neutral 99%, Angry 56%, Surprise 42%, Fear 76%. Đây là confidence mô hình, không phải điểm chính xác. Chưa gán nhãn thủ công cho từng frame nên không thể tính precision/recall hay tỷ lệ đúng.
+
+Hình 1 và Hình 2 vẫn là sơ đồ kiến trúc và quỹ đạo lý thuyết; Hình 3–4 là dữ liệu lấy từ phiên chạy thật.
 
 ## 7. Hạn chế và an toàn
 
@@ -188,7 +193,7 @@ Các hình ở Hình 1–2 chỉ là sơ đồ và kết quả mô phỏng toán
 
 ## 8. Kết luận
 
-Bài thực hành đã được tích hợp thành hai node ROS 2, launch riêng, overlay camera, lọc kết quả mơ hồ và ánh xạ sáu trạng thái sang lệnh vận tốc. Package trong workspace build thành công. Độ ổn định nhận diện và hành vi robot đầu-cuối vẫn cần được ghi nhận bằng phiên chạy thực tế; báo cáo không khẳng định các phép thử chưa có bằng chứng đã đạt.
+Bài thực hành đã được tích hợp thành hai node ROS 2, launch riêng, overlay camera, lọc kết quả mơ hồ và ánh xạ sáu trạng thái sang lệnh vận tốc. Hai package đã build thành công; ảnh camera mô phỏng, preview webcam đã ẩn danh và log của phiên chạy thật được bổ sung. Độ chính xác phân loại và quỹ đạo thực tế chưa được đo với ground-truth/odometry nên không báo cáo thành tích định lượng.
 
 ## Tài liệu tham khảo
 
